@@ -17,6 +17,6 @@
       = render :partial => 'recommendations/recommendation', :collection => recommendations
 
 - if defined? link_to_swap and link_to_swap
-  .d-flex.justify-content-end
-    = link_to "Swap", new_user_swap_path(user_id: other_user.id), class: "btn btn-secondary"
+  .d-flex.justify-content-center
+    = link_to "Swap My Vote", new_user_swap_path(user_id: other_user.id), class: "btn btn-secondary"
 
