@@ -28,10 +28,6 @@
         }
     }
 
-    .profile-votes {
-        margin-top: 12px;
-    }
-
     .profile-poll {
         height: 100%;
         box-sizing: border-box;
@@ -89,11 +85,9 @@
             width: 11.5%;
             vertical-align: top;
         }
-
     }
 
     .recommendation-source {
-
         @include largescreen {
             font-size: $base-font-size * 0.7;
             min-height: 3.5em;
@@ -104,34 +98,21 @@
             width: 45%;
             text-align: right;
         }
-
     }
 
     .recommendation-text {
-
         @include smallscreen {
             display: inline-block;
             width: 45%;
             text-align: left;
             vertical-align: middle;
         }
-
     }
-
 }
 
 .poll-chart {
     margin-top: 12px;
     height: 120px;
-}
-
-a.profile {
-    &:hover {
-        // FIXME
-        // scss-lint:disable ColorVariable
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-        text-decoration: none;
-    }
 }
 
 // Work around a flicker when hovering on the poll bars

@@ -4,8 +4,8 @@
 
 require("csv")
 
-class TacticalVoteCsv
-  attr_reader :file_name, :link, :site
+class TacticalVoteSttCsv
+  attr_reader :file_name, :site
 
   FILE_NAME = "db/fixtures/tactical_vote_stt.csv"
 
@@ -16,7 +16,6 @@ class TacticalVoteCsv
 
   def initialize
     @file_name = FILE_NAME
-    @link = "https://stopthetories.vote/"
     @site = "stop-the-tories"
   end
 
@@ -26,7 +25,7 @@ class TacticalVoteCsv
     @data = []
 
     CSV.foreach(FILE_NAME, headers: true, col_sep: ",") do |line|
-      unless line.to_h.keys[0] == ID_KEY && line.to_h.keys[47] == ADVICE_KEY
+      unless line.to_h.keys[0] == ID_KEY && line.to_h.keys[56] == ADVICE_KEY
         raise ArgumentError, "Input fields #{line.to_h.keys} do not match #{REQUIRED_INPUT_KEYS}"
       end
 

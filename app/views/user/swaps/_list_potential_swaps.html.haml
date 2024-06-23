@@ -7,14 +7,13 @@
     Consider the polls in their constituency to give your vote the best
     chance of making a difference!
 
-.spacer
-- for swap in @potential_swaps
+- for swap in potential_swaps
   .smv-card
     = render partial: "swap_profile", object: swap, as: "other_user", locals: { link_to_swap: true }
 
 - unless hide_polls?
   %p.text-center
-    Poll results are based on Electoral Calculus predictions for the next General Election.
+    Poll results are based on averaged MRP predictions for the next General Election.
 
 %p.text-center.small.subdued
 

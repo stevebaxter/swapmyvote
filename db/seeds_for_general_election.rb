@@ -9,10 +9,14 @@
 require "active_record/fixtures"
 require "csv"
 require_relative "fixtures/mysociety_constituencies_csv"
-require_relative "fixtures/electoral_calculus_polls"
+# require_relative "fixtures/electoral_calculus_polls"
+require_relative "fixtures/mrp_averages_polls"
 require_relative "fixtures/tactical_vote_stt_recs"
 require_relative "fixtures/tactical_vote_sprintforpr_recs"
 require_relative "fixtures/tactical_vote_tacticalvote_recs"
+require_relative "fixtures/tactical_vote_siu_recs"
+require_relative "fixtures/tactical_vote_tacticalvote_co_uk_recs"
+require_relative "fixtures/tactical_vote_getvoting_recs"
 
 puts "\n\nParties selected for GE"
 
@@ -37,20 +41,25 @@ puts "\n\nONS Constituencies"
 
 constituencies_csv = MysocietyConstituenciesCsv.new
 
-constituencies_csv.each do |constituency|
-  # puts constituency
-  cons = OnsConstituency.find_or_initialize_by ons_id: constituency[:ons_id]
-  puts "#{cons.ons_id} #{cons.name}"
-  cons.update!(constituency.slice(:name, :ons_id)) if cons.ons_id
+constituencies = constituencies_csv.map do |constituency|
+  puts "#{constituency[:ons_id]} #{constituency[:name]}"
+  # From Rails 7 onwards we don't need to specify the timestamps:
+  # https://blog.kiprosh.com/rails-7-adds-new-options-to-upsert_all/#recordtimestamps
+  constituency.slice(:name, :ons_id).merge(created_at: Time.current, updated_at: Time.current)
 end
+OnsConstituency.upsert_all(constituencies, unique_by: :ons_id)
 
 puts "#{OnsConstituency.count} ONS Constituencies loaded\n\n"
 
 # ---------------------------------------------------------------------------------
 
-puts "\n\nPolls Data from Electoral calculus\n\n"
+# puts "\n\nPolls Data from Electoral calculus\n\n"
 
-ElectoralCalculusPolls.new.load
+# ElectoralCalculusPolls.new.load
+
+puts "\n\nPolls Data from MRP averages\n\n"
+
+MrpAveragesPolls.new.load
 
 # ---------------------------------------------------------------------------------
 
@@ -69,6 +78,18 @@ TacticalVoteSprintforprRecs.new.load
 puts "\n\nLoading Recommendations from tactical.vote"
 
 TacticalVoteTacticalVoteRecs.new.load
+
+puts "\n\nLoading Recommendations from scotlandinunion.co.uk"
+
+TacticalVoteSiuRecs.new.load
+
+puts "\n\nLoading Recommendations from tacticalvote.co.uk"
+
+TacticalVoteTacticalVoteCoUkRecs.new.load
+
+puts "\n\nLoading Recommendations from getvoting.org"
+
+TacticalVoteGetvotingRecs.new.load
 
 r_c_count = Recommendation.left_joins(:constituency).where(ons_constituencies: { ons_id: nil }).count
 puts "There are #{r_c_count} Recommendation records with no matching OnsConstituency" unless r_c_count.zero?
