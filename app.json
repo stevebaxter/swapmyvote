@@ -11,13 +11,21 @@
   "success_url": "/",
   "stack": "heroku-22",
   "env": {
+    "HEROKU_APP_NAME": {
+      "required": true
+    },
+    "STAGING_DATABASE_URL": {
+      "required": true
+    },
     "SERVER_HOST": {
       "description": "Determine what cookie name to use.  This can also be used to construct SERVER_HOST_PORT.",
+      "required": "false",
       "value": ""
     },
     "SERVER_HOST_PORT": {
       "description": "Used to figure out what URLs to generate when sending out email.  It can't be done dynamically because the mailer instance doesn't have any context about the incoming request.",
-      "required": "false"
+      "required": "false",
+      "value": ""
     },
     "FACEBOOK_KEY": {
       "description": "Facebook application key for allowing log-ins via Facebook.",
@@ -39,8 +47,8 @@
       "required": "false",
       "value": ""
     },
-    "GOOGLE_ANALYTICS_ID": {
-      "description": "Google Analytics tracking ID (optional)",
+    "GOOGLE_TAG_MANAGER_ID": {
+      "description": "Google TagManager container ID (optional)",
       "required": "false",
       "value": ""
     },
@@ -113,6 +121,17 @@
     "test": {
       "scripts": {
         "test": "bundle exec rake test"
+      }
+    },
+    "review": {
+      "addons": [
+        {
+          "plan": "heroku-postgresql:essential-0",
+          "as": "DATABASE"
+        }
+      ],
+      "scripts": {
+        "postdeploy": "pg_dump $STAGING_DATABASE_URL | psql $DATABASE_URL && bundle exec rake db:migrate"
       }
     }
   }

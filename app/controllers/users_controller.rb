@@ -28,8 +28,14 @@ class UsersController < ApplicationController
     @constituencies = OnsConstituency.all.order(:name)
   end
 
+  # rubocop:disable Metrics/MethodLength
   def update
-    @user.update(user_params) if params[:user]
+    review_required = false
+    if params[:user]
+      @user.assign_attributes(user_params)
+      review_required = @user.swap_profile_changed?
+      @user.save
+    end
 
     if !phone_param.blank? && @user.mobile_number != phone_param
       begin
@@ -39,18 +45,18 @@ class UsersController < ApplicationController
       end
     end
 
+    no_flash_errors = (!flash[:errors] || flash[:errors].size.zero?)
+
+    if @user.valid? && no_flash_errors && review_required
+      redirect_to review_user_path and return
+    end
+
     flash[:errors] = @user.errors.full_messages unless @user.valid?
 
     redirect_to redirect_path
   end
 
   def redirect_path
-    # If the user came from the edit path, and the mobile still needs verification, return there
-    if params[:user] && mobile_set_but_not_verified?
-      flash[:errors] = ["Please click the Verify button to verify the mobile phone number you provided."]
-      return edit_user_path
-    end
-
     return edit_user_path unless @user.valid?
 
     # Otherwise, return to the user path - user will see a verification prompt if needed

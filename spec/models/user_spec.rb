@@ -75,6 +75,48 @@ RSpec.describe User, type: :model do
     end
   end
 
+  context "when user has preferred party, willing party and constituency," do
+    let(:constituency) { OnsConstituency.create!(name: "test con 1", ons_id: "another-fake-ons-id") }
+    let(:no_swap_user) { create(:user,
+                                name: "Cecil",
+                                id: 1,
+                                constituency_ons_id: constituency.ons_id,
+                                preferred_party_id: 3,
+                                willing_party_id: 2)
+                        }
+
+    describe "#swap_profile_changed?" do
+      context "setting constituency" do
+        let(:the_change) {
+          -> { no_swap_user.constituency_ons_id = "some-fake-ons-id" }
+        }
+
+        specify {
+          expect(&the_change).to change(no_swap_user, :swap_profile_changed?)
+                                   .from(false).to(true)
+        }
+      end
+
+      context "setting preferred_party" do
+        let(:the_change) { -> { no_swap_user.preferred_party_id = 1 } }
+
+        specify {
+          expect(&the_change).not_to change(no_swap_user, :swap_profile_changed?)
+                                           .from(false)
+        }
+      end
+
+      context "setting willing_party" do
+        let(:the_change) { -> { no_swap_user.willing_party_id = 4} }
+
+        specify {
+          expect(&the_change).to change(no_swap_user, :swap_profile_changed?)
+                                           .from(false).to(true)
+        }
+      end
+    end
+  end
+
   describe "#try_to_create_potential_swap" do
     before do
       subject.willing_party_id = 2
@@ -205,12 +247,26 @@ RSpec.describe User, type: :model do
 
       it "sets a new mobile number and deletes the first" do
         subject.mobile_number = number1
-        mobile = subject.mobile_phone
+        subject.mobile_phone.verify_id = "some OTP verification code"
+        subject.save!
         subject.mobile_number = number2
         subject.reload
         expect(subject.mobile_phone.number).to eq(number2)
-        expect(subject.mobile_phone.id).not_to eq(mobile.id)
-        expect(MobilePhone.find_by(id: mobile.id)).to be_nil
+        expect(subject.mobile_phone.verify_id).to eq(nil)
+        # FIXME: we can't check that the mobile_phone id changed
+        # because due to this bug in ActiveRecord's SQLite3Adapter,
+        # AUTOINCREMENT gets lost from the db when schema.rb contains
+        #
+        #   add_foreign_key "mobile_phones", "users"
+        #
+        # https://github.com/rails/rails/issues/47400
+        #
+        # This means that the test db (which is always recreated
+        # from schema.rb) is missing AUTOINCREMENT, therefore the
+        # mobile_phone id will get reused via DESTROY followed by
+        # INSERT.  When we upgrade to Rails >= 7.1.x, this bug
+        # should vanish and we can also test that the id increments,
+        # although arguably this is an implementation detail anyway.
       end
 
       it "prevents two users having the same number" do
