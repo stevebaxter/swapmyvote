@@ -8,7 +8,10 @@ class MobilePhoneController < ApplicationController
     phone.number = params[:mobile_phone][:full] if params[:mobile_phone]
 
     otp = api_get_otp
-    rescue_error("") if otp.nil?
+    if otp.nil?
+      rescue_error("Sorry, I couldn't send you a verification SMS! Please try again later.")
+      return
+    end
 
     delete_previous_verify_id if phone.verify_id
     phone.verify_id = otp.id
@@ -47,8 +50,8 @@ class MobilePhoneController < ApplicationController
   def rescue_error(message_text)
     # Make sure the number is removed if we could not send verification
     # or if it is a duplicate
-    phone.update_attributes(number: nil)
-    flash[:errors] = message_text
+    phone.update(number: nil)
+    flash[:errors] = [message_text]
     redirect_back fallback_location: edit_user_path
     return
   end
