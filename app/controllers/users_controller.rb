@@ -45,6 +45,13 @@ class UsersController < ApplicationController
       end
     end
 
+    unless @user.willing_party
+      (flash[:errors] ||= []).append "You must state which party you are willing to vote for."
+    end
+    unless @user.preferred_party
+      (flash[:errors] ||= []).append "You must state which party you would prefer to vote for."
+    end
+
     no_flash_errors = (!flash[:errors] || flash[:errors].size.zero?)
 
     if @user.valid? && no_flash_errors && review_required
@@ -57,6 +64,12 @@ class UsersController < ApplicationController
   end
 
   def redirect_path
+    # If the user came from the edit path, and the mobile still needs verification, return there
+    if params[:user] && mobile_set_but_not_verified?
+      flash[:errors] = ["Please click the Verify button to verify the mobile phone number you provided."]
+      return edit_user_path
+    end
+
     return edit_user_path unless @user.valid?
 
     # Otherwise, return to the user path - user will see a verification prompt if needed
