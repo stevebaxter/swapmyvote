@@ -181,6 +181,26 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#name_and_email" do
+    it "returns just name when no email" do
+      subject.name = "Ada Lovelace"
+      subject.email = ""
+      expect(subject.name_and_email).to eq("Ada Lovelace")
+    end
+
+    it "includes both when not test user" do
+      subject.name = "Ada Lovelace"
+      subject.email = "ada@lovelace.com"
+      expect(subject.name_and_email).to eq("Ada Lovelace <ada@lovelace.com>")
+    end
+
+    it "includes both when test user" do
+      subject.name = "Ada Lovelace"
+      subject.email = "ada@example.com"
+      expect(subject.name_and_email).to eq("Ada Lovelace (test user) <ada@example.com>")
+    end
+  end
+
   context "-> MobilePhone:" do
     let(:number1) { "07771 111 111" }
     let(:number2) { "07772 222 222" }
@@ -276,6 +296,41 @@ RSpec.describe User, type: :model do
           user2.mobile_number = number1
         }.to raise_error(ActiveRecord::RecordInvalid,
                          /Number has already been taken/)
+      end
+    end
+  end
+
+  describe "#can_receive_email?" do
+    it "returns false for test users" do
+      expect(subject.can_receive_email?("welcome")).to be_falsey
+    end
+
+    it "returns false for users with blank email" do
+      expect(build(:user, email: "").can_receive_email?("welcome")).to be_falsey
+    end
+
+    it "returns true for non-test users" do
+      expect(build(:user, email: "real@address.honest.com").can_receive_email?("welcome")).to be_truthy
+    end
+  end
+
+  describe "#send_get_swapping_reminder_email" do
+    context "when the user has an email address" do
+      before { subject.update(email: "some@email.address", willing_party: build(:party)) }
+
+      describe "sends a reminder email" do
+        before { subject.sent_emails.clear }
+
+        let(:an_email) { double(:an_email) }
+
+        it "sends only one email" do
+          expect(an_email).to receive(:deliver_now)
+          expect(UserMailer).to receive(:reminder_to_get_swapping).with(subject).and_return(an_email)
+          subject.send_get_swapping_reminder_email
+
+          expect(UserMailer).not_to receive(:reminder_to_get_swapping)
+          subject.send_get_swapping_reminder_email
+        end
       end
     end
   end
