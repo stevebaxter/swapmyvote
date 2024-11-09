@@ -1,12 +1,15 @@
 class AdminController < ApplicationController
-  if ENV["ADMIN_PASSWORD"].blank?
-    raise "You didn't set ADMIN_PASSWORD!"
-  end
-
   # before_action :require_login, only: [:send_email_proofs]
 
-  http_basic_authenticate_with name: "swapmyvote",
-                               password: ENV["ADMIN_PASSWORD"] || "secret"
+  def self.admin_user
+    "swapmyvote"
+  end
+
+  def self.admin_password
+    ENV["ADMIN_PASSWORD"] || "secret"
+  end
+
+  http_basic_authenticate_with name: admin_user, password: admin_password
 
   def index
   end
@@ -77,6 +80,7 @@ class AdminController < ApplicationController
       UserMailer.not_swapped_follow_up(current_user).deliver_now
       UserMailer.partner_has_voted(current_user).deliver_now
       UserMailer.reminder_to_get_swapping(current_user).deliver_now
+      UserMailer.reminder_to_accept_swap(current_user, other_user).deliver_now
       UserMailer.reminder_to_vote(current_user).deliver_now
       UserMailer.no_swap(current_user).deliver_now
       UserMailer.swap_not_confirmed(current_user).deliver_now
